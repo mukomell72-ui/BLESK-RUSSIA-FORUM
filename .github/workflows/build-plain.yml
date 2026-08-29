@@ -21,7 +21,7 @@ jobs:
         run: |
           set -euo pipefail
           cat css1.b64 css2.b64 css3.b64 css4.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > style.css
-          cat af1.b64 af2.b64 af3.b64 af4.b64 af5.b64 af6.b64 af7.b64 af8.b64 af9.b64 af10.b64 af11.b64 af12.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > app.js
+          cat af1.b64 af2.b64 af3.b64 af4.b64 af5.b64 af6p1.b64 af6p2.b64 af6p3.b64 af6p4.b64 af7.b64 af8.b64 af9.b64 af10.b64 af11.b64 af12.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > app.js
           node --check app.js
 
       - name: Remove runtime fetch loader and force owner admin access
@@ -36,10 +36,10 @@ jobs:
           Path('app.js').write_text(app, encoding='utf-8')
 
           html = Path('forum.html').read_text(encoding='utf-8')
-          html = re.sub(r'<script>\s*function cleanBase64[\s\S]*?</script>', '<script src="app.js?v=plain7"></script>', html, count=1)
-          if 'style.css?v=plain7' not in html:
-              html = html.replace('</head>', '<link rel="stylesheet" href="style.css?v=plain7">\n</head>')
-          html = html.replace('adminfix4', 'plain7').replace('adminfix3', 'plain7').replace('adminfix2', 'plain7')
+          html = re.sub(r'<script>\s*function cleanBase64[\s\S]*?</script>', '<script src="app.js?v=plain8"></script>', html, count=1)
+          if 'style.css?v=plain8' not in html:
+              html = html.replace('</head>', '<link rel="stylesheet" href="style.css?v=plain8">\n</head>')
+          html = html.replace('adminfix4', 'plain8').replace('adminfix3', 'plain8').replace('adminfix2', 'plain8').replace('plain7', 'plain8')
           Path('forum.html').write_text(html, encoding='utf-8')
           Path('index.html').write_text(html, encoding='utf-8')
 
@@ -48,8 +48,8 @@ jobs:
         run: |
           set -e
           node --check app.js
-          grep -q 'style.css?v=plain7' index.html
-          grep -q 'app.js?v=plain7' index.html
+          grep -q 'style.css?v=plain8' index.html
+          grep -q 'app.js?v=plain8' index.html
           ! grep -q 'fetch(' index.html
 
       - name: Publish generated files
