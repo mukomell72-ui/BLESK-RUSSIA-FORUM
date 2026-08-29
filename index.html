@@ -72,7 +72,15 @@
 <div id="toast" class="toast"></div>
 <script>
 async function ungzip64(s){const b=Uint8Array.from(atob(s),c=>c.charCodeAt(0));const ds=new DecompressionStream("gzip");return await new Response(new Blob([b]).stream().pipeThrough(ds)).text()}
-(async()=>{const css64=await fetch("css.b64").then(r=>r.text());const js64=(await Promise.all([1,2,3,4].map(i=>fetch(`js${i}.b64`).then(r=>r.text())))).join("");const css=await ungzip64(css64.trim());document.head.append(Object.assign(document.createElement("style"),{textContent:css}));const js=await ungzip64(js64.replace(/\s/g,""));(0,eval)(js)})().catch(e=>{document.body.innerHTML='<pre style="color:white;background:#111;padding:20px">'+e+'</pre>'});
+(async()=>{
+const cssFiles=["css1.b64","css2.b64","css3.b64","css4.b64"];
+const jsFiles=["js1.b64","js2.b64","js3.b64","js4a.b64","js4b.b64","js5a.b64","js5b.b64","js6.b64","js7a.b64","js7b.b64","js8a.b64","js8b.b64"];
+const load=async names=>(await Promise.all(names.map(async name=>{const r=await fetch(name+"?v=2");if(!r.ok)throw new Error(name+": HTTP "+r.status);return r.text()}))).join("");
+const css=await ungzip64((await load(cssFiles)).replace(/\s/g,""));
+document.head.append(Object.assign(document.createElement("style"),{textContent:css}));
+const js=await ungzip64((await load(jsFiles)).replace(/\s/g,""));
+(0,eval)(js)
+})().catch(e=>{document.body.innerHTML='<pre style="color:white;background:#111;padding:20px;white-space:pre-wrap">Ошибка загрузки форума: '+e+'</pre>'});
 </script>
 </body>
 </html>
