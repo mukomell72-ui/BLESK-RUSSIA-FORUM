@@ -16,13 +16,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Reconstruct and verify source bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat v10_p1_01.part v10_p1_02.part v10_p1_03.part v10_p1_04.part v10_p1_05.part v10_p1_06.part > p1.tmp
+          cat v10_p3_01.part v10_p3_02.part v10_p3_03.part v10_p3_04.part v10_p3_05.part v10_p3_06.part > p3.tmp
+
+          test "$(git hash-object p1.tmp)" = "95718768674a0e7dd55822e09be067a4799cd117"
+          test "$(git hash-object p3.tmp)" = "39c7e003f5d46a6a37efadeeb4fc557c5a6a4217"
+          test "$(git hash-object v9_afpair2.b64)" = "e0e7bf93c47449fd41c2f546da2794d77e9aee59"
+          test "$(git hash-object v9_afpair4.b64)" = "429659aba03c14c67b4cf7e1ee95ddee954f19be"
+          test "$(git hash-object v9_afpair5.b64)" = "3760ed6e23afeead9393edf927c1de87041cabcc"
+          test "$(git hash-object v9_afpair6.b64)" = "9fb064aa20b23570a1077aa42d109a241305906d"
+          test "$(git hash-object v9_css1.b64)" = "36949c82f4043071b7ab6391f2d1f0c739357ddb"
+          test "$(git hash-object v9_css2.b64)" = "16d209cde06e741b774fa327bb292cf7f9f608c2"
+          test "$(git hash-object v9_css3.b64)" = "3fe4c99ebc93e3d84351aab043daaafd1ba2e66f"
+          test "$(git hash-object v9_css4.b64)" = "476bb401b3ff3e739ea1825af3201acfa9148217"
+
       - name: Decode CSS and JavaScript
         shell: bash
         run: |
           set -euo pipefail
-          cat css1.b64 css2.b64 css3.b64 css4.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > style.css
-          cat af1.b64 af2.b64 af3.b64 af4.b64 af5.b64 af6p1.b64 af6p2.b64 af6p3.b64 af6p4.b64 af7.b64 af8.b64 af9.b64 af10.b64 af11.b64 af12.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > app.js
+          cat v9_css1.b64 v9_css2.b64 v9_css3.b64 v9_css4.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > style.css
+          cat p1.tmp v9_afpair2.b64 p3.tmp v9_afpair4.b64 v9_afpair5.b64 v9_afpair6.b64 | tr -d '\r\n ' | base64 -d | gzip -dc > app.js
           node --check app.js
+          test "$(wc -c < app.js)" -gt 100000
+          test "$(wc -c < style.css)" -gt 50000
 
       - name: Build plain GitHub Pages site
         shell: python
@@ -36,29 +57,33 @@ jobs:
           Path('app.js').write_text(app, encoding='utf-8')
 
           html = Path('forum.html').read_text(encoding='utf-8')
-          html = re.sub(r'<script>\s*function cleanBase64[\s\S]*?</script>', '<script src="app.js?v=plain9"></script>', html, count=1)
-          html = re.sub(r'<script>[\s\S]*?loadTextSync[\s\S]*?</script>', '<script src="app.js?v=plain9"></script>', html, count=1)
-          if 'style.css?v=plain9' not in html:
-              html = html.replace('</head>', '<link rel="stylesheet" href="style.css?v=plain9">\n</head>')
-          html = re.sub(r'style\.css\?v=[^"\']+', 'style.css?v=plain9', html)
-          html = re.sub(r'app\.js\?v=[^"\']+', 'app.js?v=plain9', html)
+          html = re.sub(r'<script>\s*function cleanBase64[\s\S]*?</script>', '<script src="app.js?v=plain10"></script>', html, count=1)
+          html = re.sub(r'<script>[\s\S]*?loadTextSync[\s\S]*?</script>', '<script src="app.js?v=plain10"></script>', html, count=1)
+          html = re.sub(r'<script>[\s\S]*?ungzip64[\s\S]*?</script>', '<script src="app.js?v=plain10"></script>', html, count=1)
+          html = re.sub(r'<link rel="stylesheet" href="style\.css\?v=[^"]+">', '', html)
+          html = html.replace('</head>', '<link rel="stylesheet" href="style.css?v=plain10">\n</head>')
+          html = re.sub(r'<script src="app\.js\?v=[^"]+"></script>', '<script src="app.js?v=plain10"></script>', html)
           Path('forum.html').write_text(html, encoding='utf-8')
           Path('index.html').write_text(html, encoding='utf-8')
 
       - name: Validate generated site
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           node --check app.js
-          grep -q 'style.css?v=plain9' index.html
-          grep -q 'app.js?v=plain9' index.html
+          grep -q 'style.css?v=plain10' index.html
+          grep -q 'app.js?v=plain10' index.html
           ! grep -q 'fetch(' index.html
           ! grep -q 'atob(' index.html
           ! grep -q 'loadTextSync' index.html
+          ! grep -q 'ungzip64' index.html
+          test "$(wc -c < app.js)" -gt 100000
+          test "$(wc -c < style.css)" -gt 50000
 
       - name: Publish generated files
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'BLESK Forum Builder'
           git config user.email 'actions@users.noreply.github.com'
           git add app.js style.css index.html forum.html
@@ -66,5 +91,5 @@ jobs:
             echo 'No changes to publish'
             exit 0
           fi
-          git commit -m 'Publish plain forum v9'
+          git commit -m 'Publish verified plain forum v10'
           git push
