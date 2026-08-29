@@ -57,12 +57,12 @@ jobs:
           Path('app.js').write_text(app, encoding='utf-8')
 
           html = Path('forum.html').read_text(encoding='utf-8')
-          html = re.sub(r'<script>\s*function cleanBase64[\s\S]*?</script>', '<script src="app.js?v=plain10"></script>', html, count=1)
-          html = re.sub(r'<script>[\s\S]*?loadTextSync[\s\S]*?</script>', '<script src="app.js?v=plain10"></script>', html, count=1)
-          html = re.sub(r'<script>[\s\S]*?ungzip64[\s\S]*?</script>', '<script src="app.js?v=plain10"></script>', html, count=1)
+          html = re.sub(r'<script>\s*function cleanBase64[\s\S]*?</script>', '<script src="app.js?v=plain11"></script>', html, count=1)
+          html = re.sub(r'<script>[\s\S]*?loadTextSync[\s\S]*?</script>', '<script src="app.js?v=plain11"></script>', html, count=1)
+          html = re.sub(r'<script>[\s\S]*?ungzip64[\s\S]*?</script>', '<script src="app.js?v=plain11"></script>', html, count=1)
           html = re.sub(r'<link rel="stylesheet" href="style\.css\?v=[^"]+">', '', html)
-          html = html.replace('</head>', '<link rel="stylesheet" href="style.css?v=plain10">\n</head>')
-          html = re.sub(r'<script src="app\.js\?v=[^"]+"></script>', '<script src="app.js?v=plain10"></script>', html)
+          html = html.replace('</head>', '<link rel="stylesheet" href="style.css?v=plain11">\n</head>')
+          html = re.sub(r'<script src="app\.js\?v=[^"]+"></script>', '<script src="app.js?v=plain11"></script>', html)
           Path('forum.html').write_text(html, encoding='utf-8')
           Path('index.html').write_text(html, encoding='utf-8')
 
@@ -71,8 +71,8 @@ jobs:
         run: |
           set -euo pipefail
           node --check app.js
-          grep -q 'style.css?v=plain10' index.html
-          grep -q 'app.js?v=plain10' index.html
+          grep -q 'style.css?v=plain11' index.html
+          grep -q 'app.js?v=plain11' index.html
           ! grep -q 'fetch(' index.html
           ! grep -q 'atob(' index.html
           ! grep -q 'loadTextSync' index.html
@@ -91,5 +91,5 @@ jobs:
             echo 'No changes to publish'
             exit 0
           fi
-          git commit -m 'Publish verified plain forum v10'
+          git commit -m 'Publish verified plain forum v11'
           git push
