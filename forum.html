@@ -24,6 +24,25 @@
 <script>
 function cleanBase64(s){let x=String(s||'').replace(/[^A-Za-z0-9+/]/g,'');return x+'='.repeat((4-x.length%4)%4)}
 async function ungzip64(s){const b=Uint8Array.from(atob(cleanBase64(s)),c=>c.charCodeAt(0));const ds=new DecompressionStream('gzip');return await new Response(new Blob([b]).stream().pipeThrough(ds)).text()}
-(async()=>{const ver='adminfix4';const load=async names=>(await Promise.all(names.map(async n=>{const r=await fetch(n+'?v='+ver,{cache:'no-store'});if(!r.ok)throw new Error(n+': HTTP '+r.status);return r.text()}))).join('');const css=await ungzip64(await load(['css1.b64','css2.b64','css3.b64','css4.b64']));document.head.append(Object.assign(document.createElement('style'),{textContent:css}));const js=await ungzip64(await load(['af1.b64','af2.b64','af3.b64','af4.b64','af5.b64','af6.b64','af7.b64','af8.b64','af9.b64','af10.b64','af11.b64','af12.b64']));(0,eval)(js)})().catch(e=>{document.body.innerHTML='<pre style="color:white;background:#111;padding:20px;white-space:pre-wrap">Ошибка загрузки форума:\n'+(e&&e.stack?e.stack:e)+'</pre>'});
+function loadTextSync(name,ver){const x=new XMLHttpRequest();x.open('GET',name+'?v='+ver,false);x.setRequestHeader('Cache-Control','no-cache');x.send(null);if(x.status!==200&&x.status!==0)throw new Error(name+': HTTP '+x.status);return x.responseText}
+(async()=>{
+  const ver='adminfix5';
+  if('serviceWorker' in navigator){
+    try{
+      const regs=await navigator.serviceWorker.getRegistrations();
+      if(regs.length&&!sessionStorage.getItem('blesk_sw_clean_5')){
+        await Promise.all(regs.map(r=>r.unregister()));
+        sessionStorage.setItem('blesk_sw_clean_5','1');
+        location.replace('forum.html?v='+ver+'&clean=1');
+        return;
+      }
+    }catch(e){}
+  }
+  const load=names=>names.map(n=>loadTextSync(n,ver)).join('');
+  const css=await ungzip64(load(['css1.b64','css2.b64','css3.b64','css4.b64']));
+  document.head.append(Object.assign(document.createElement('style'),{textContent:css}));
+  const js=await ungzip64(load(['af1.b64','af2.b64','af3.b64','af4.b64','af5.b64','af6.b64','af7.b64','af8.b64','af9.b64','af10.b64','af11.b64','af12.b64']));
+  (0,eval)(js);
+})().catch(e=>{document.body.innerHTML='<pre style="color:white;background:#111;padding:20px;white-space:pre-wrap">Ошибка загрузки форума:\n'+(e&&e.stack?e.stack:e)+'</pre>'});
 </script>
 </body></html>
