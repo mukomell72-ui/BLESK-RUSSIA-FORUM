@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#121923">
+<title>BLESK RUSSIA | Форум</title>
+</head>
+<body>
+<header class="siteHeader"><div class="headerInner">
+<button class="mobileMenu headerIcon" onclick="toggleMobile()" aria-label="Меню">☰</button>
+<a class="logoWrap" href="#" onclick="navigate('home')"><div style="width:52px;height:52px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#2d6ee8,#16253e);color:#fff;font-weight:950;font-size:15px;box-shadow:0 0 18px rgba(47,124,255,.22)">BR</div><div class="logoText"><b>BLESK RUSSIA</b><small>Официальный форум</small></div></a>
+<nav id="mainNav"><a onclick="navigate('landing')">Главная</a><a class="active" onclick="navigate('home')">Форум</a><a onclick="navigate('new')">Новые сообщения</a><a onclick="navigate('members')">Пользователи</a></nav>
+<div class="headerActions"><button class="avatarButton" onclick="openLogin()" title="Профиль">ВХ</button><button class="headerIcon" onclick="navigate('new')" title="Сообщения">▢</button><button class="headerIcon" onclick="toast('Новых уведомлений нет')" title="Уведомления">♧</button><button class="headerIcon" onclick="navigate('activity')" title="Активность">ϟ</button><button class="headerIcon" onclick="openSearch()" title="Поиск">⌕</button><button id="adminTopButton" class="headerIcon adminTopButton hidden" onclick="navigate('admin')" title="Админ-панель">⚙</button><button class="linkBtn" onclick="openLogin()">Вход</button></div>
+</div></header>
+<div class="subNav"><div class="subInner"><div><a onclick="navigate('new')">Новые сообщения</a><a onclick="navigate('activity')">Недавняя активность</a></div><button class="installBtn" id="installBtn">＋ Установить приложение</button></div></div>
+<main class="container">
+<section id="welcome" class="welcome compactWelcome"><div class="welcomeCopy"><h1><strong>BLESK RUSSIA</strong> <span>| Форум</span></h1><div class="welcomeActions"><button class="secondaryAction compactAction" onclick="navigate('new')"><span>♨</span> Новые сообщения</button><button class="accentAction compactAction" onclick="openCreateTopic()"><span>▧</span> Создать тему...</button></div></div><div class="welcomeArt" aria-hidden="true"><div class="artGlow"></div><div class="artLogo">R</div></div></section>
+<div class="breadcrumb"><a onclick="navigate('landing')">Главная</a><span>›</span><a onclick="navigate('home')">Форум</a><span id="crumbExtra"></span></div>
+<div class="layout"><section id="content" class="content"></section><aside id="sidebar" class="sidebar"></aside></div>
+</main>
+<footer><div class="footerInner"><div><b>BLESK RUSSIA</b><p>Независимый игровой форум.</p></div><div class="footerLinks"><a>Обратная связь</a><a>Условия и правила</a><a>Политика конфиденциальности</a><a>Помощь</a></div></div></footer>
+<div id="modal" class="modal hidden"><div class="modalBox"><button class="close" onclick="closeModal()">×</button><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
+<script>
+async function ungzip64(s){const b=Uint8Array.from(atob(s),c=>c.charCodeAt(0));const ds=new DecompressionStream('gzip');return await new Response(new Blob([b]).stream().pipeThrough(ds)).text()}
+(async()=>{const load=async names=>(await Promise.all(names.map(async n=>{const r=await fetch(n+'?v=adminfix2');if(!r.ok)throw new Error(n+': HTTP '+r.status);return r.text()}))).join('');const css=await ungzip64((await load(['css1.b64','css2.b64','css3.b64','css4.b64'])).replace(/\s/g,''));document.head.append(Object.assign(document.createElement('style'),{textContent:css}));const js=await ungzip64((await load(['af1.b64','af2.b64','af3.b64','af4.b64','af5.b64','af6.b64','af7.b64','af8.b64','af9.b64','af10.b64','af11.b64','af12.b64'])).replace(/\s/g,''));(0,eval)(js)})().catch(e=>{document.body.innerHTML='<pre style="color:white;background:#111;padding:20px;white-space:pre-wrap">Ошибка загрузки форума: '+e+'</pre>'});
+</script>
+</body></html>
