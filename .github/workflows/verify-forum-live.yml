@@ -1,0 +1,25 @@
+name: BLEZZ RUSSIA — Verify live page
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-forum-live.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check public forum HTML and assets
+        run: |
+          set -euo pipefail
+          base="https://mukomell72-ui.github.io/BLESK-RUSSIA-FORUM/forum-app"
+          curl --retry 5 --retry-delay 4 --retry-all-errors --fail --location --silent --show-error "$base/" > /tmp/forum.html
+          grep -q 'BLEZZ RUSSIA' /tmp/forum.html
+          grep -q 'static.js' /tmp/forum.html
+          curl --retry 5 --retry-delay 4 --retry-all-errors --fail --location --silent --show-error "$base/static.js" > /tmp/forum.js
+          grep -q 'blezz_forum_threads' /tmp/forum.js
+          curl --retry 5 --retry-delay 4 --retry-all-errors --fail --location --silent --show-error "$base/static.css" > /tmp/forum.css
+          test "$(wc -c < /tmp/forum.js)" -gt 10000
+          echo "Verified public forum and assets at $base/"
