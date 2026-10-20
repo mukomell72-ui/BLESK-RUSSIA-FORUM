@@ -19,7 +19,8 @@ const fail=x=>{S.error=x?.message||String(x);S.message='';render();window.scroll
 function screen(r){location.hash=r;if(route()[0]===r)render()}
 function needAuth(){if(S.user)return true;screen('auth');return false}
 function calcSeason(t=S.theme){if(!t.auto_schedule)return t.season;const md=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Oslo',month:'2-digit',day:'2-digit'}).format(new Date()).split(/[-/]/).slice(-2).join('-');const entries=Object.entries(t.schedule||{}).filter(([s,v])=>seasons[s]&&s!=='custom'&&/^\d\d-\d\d$/.test(v)).sort((a,b)=>b[1].localeCompare(a[1]));return (entries.find(([s,v])=>v<=md)||entries[0]||['winter'])[0]}
-function applyTheme(){const t=S.theme,c=t.config||{},s=calcSeason(t),color=/^#[\da-f]{6}$/i.test(c.accent||'')?c.accent:seasons[s][2];document.documentElement.style.setProperty('--accent',color);document.documentElement.dataset.season=s;
+function effectiveConfig(t,season=calcSeason(t)){const base=t.config||{};return {...base,...(base.seasonStyles?.[season]||{})}}
+function applyTheme(){const t=S.theme,c=effectiveConfig(t),s=calcSeason(t),color=/^#[\da-f]{6}$/i.test(c.accent||'')?c.accent:seasons[s][2];document.documentElement.style.setProperty('--accent',color);document.documentElement.dataset.season=s;
 document.documentElement.style.setProperty('--round',Math.max(6,Math.min(26,Number(c.buttonRadius||13)))+'px');
 document.documentElement.style.setProperty('--season-bg',U(c.background)?'url("'+U(c.background)+'")':'none');
 const weather=$('#effects');const path=route()[0];weather.innerHTML='';if(c.effects===false||c.scope==='home'&&path!=='home')return;
@@ -66,10 +67,10 @@ const options=(arr,selected='',value='id',label='name',empty='Выберите')
 function roleBadges(id){return S.memberships.filter(m=>m.user_id===id).map(m=>S.roles.find(r=>r.id===m.role_id)).filter(Boolean).map(r=>'<span class="tag" style="color:'+E(/^#[\da-f]{6}$/i.test(r.color)?r.color:'#ddd')+'">'+E(r.name)+'</span>').join(' ')||'<span class="tag">Пользователь</span>'}
 function card(s,cls=''){return '<div class="static-card '+cls+'">'+s+'</div>'}
 function listThreads(items){return items.length?'<div class="panel">'+items.map(t=>'<button class="static-thread" data-route="thread/'+E(t.id)+'"><span class="thread-avatar">'+E(who(t.author_id).slice(0,1))+'</span><span class="thread-main"><strong>'+(t.pinned?'📌 ':'')+E(t.title)+(t.locked?' 🔒':'')+'</strong><small>'+E(who(t.author_id))+' · '+date(t.created_at)+'</small></span><span class="tag status-'+E(t.status)+'">'+E(ts[t.status]||t.status)+'</span></button>').join('')+'</div>':card('<p class="muted">Пока нет тем. Создайте первое обсуждение.</p>')}
-function header(){const s=calcSeason(),c=S.theme.config||{},logo=U(c.logo)?'<img src="'+E(U(c.logo))+'" width="39" height="39" alt="Логотип" style="object-fit:contain">':'<span class="brand-emblem">🎮</span>';
+function header(){const s=calcSeason(),c=effectiveConfig(S.theme),logo=U(c.logo)?'<img src="'+E(U(c.logo))+'" width="39" height="39" alt="Логотип" style="object-fit:contain">':'<span class="brand-emblem">🎮</span>';
 const unread=S.notifications.filter(n=>!n.seen).length;
 return '<header class="header"><div class="header-inner"><button class="brand" data-route="home">'+logo+'<span class="brand-text">BLEZZ <b>RUSSIA</b><small>ИГРОВОЕ СООБЩЕСТВО</small></span></button><nav class="nav" style="display:flex;flex-wrap:wrap"><button data-route="home">Форум</button><button data-route="cases">Обращения</button><button data-route="messages">Сообщения</button>'+(S.rights.length?'<button data-route="admin">Админ-панель</button>':'')+'</nav><div class="header-actions"><button class="icon-btn" title="Поиск" data-route="search">⌕</button>'+(S.user?'<button class="icon-btn" title="Уведомления" data-route="notifications">♧'+(unread?'<i class="counter">'+unread+'</i>':'')+'</button><button class="user-button" data-route="profile">'+E(S.profile?.username||'Профиль')+'</button>':'<button class="btn primary small" data-route="auth">Войти</button>')+'</div></div></header>'}
-function home(){const season=calcSeason(),c=S.theme.config||{},banner=U(c.banner)?'style="background-image:linear-gradient(90deg,#101928f0,#101928a6),url('+E(U(c.banner))+')"':'';
+function home(){const season=calcSeason(),c=effectiveConfig(S.theme),banner=U(c.banner)?'style="background-image:linear-gradient(90deg,#101928f0,#101928a6),url('+E(U(c.banner))+')"':'';
 const stats='<div class="stat-grid"><div class="stat-card"><div><strong>'+S.profiles.length+'</strong><small>Участников</small></div></div><div class="stat-card"><div><strong>'+S.threads.length+'</strong><small>Тем форума</small></div></div><div class="stat-card"><div><strong>'+S.servers.length+'</strong><small>Серверов</small></div></div><div class="stat-card"><div><strong>'+S.cases.length+'</strong><small>Обращений (доступных)</small></div></div></div>';
 const cat=(c)=>'<button class="category-row" data-route="category/'+E(c.id)+'"><span class="category-icon">'+E(c.icon||'📁')+'</span><span style="flex:1"><strong>'+E(c.name)+'</strong><small>'+E(c.description||'Обсуждения игрового проекта')+'</small></span><span class="category-count">'+S.threads.filter(t=>t.category_id===c.id).length+' тем</span>›</button>';
 const sections=card('<div class="panel-header">Общая информация</div>'+S.categories.filter(x=>!x.server_id).map(cat).join(''))+S.servers.map(s=>card('<div class="panel-header">🎮 '+E(s.name)+'</div>'+S.categories.filter(x=>x.server_id===s.id).map(cat).join(''))).join('');
@@ -165,7 +166,9 @@ case 'category':
 case 'news':
  q=await db.from('blezz_forum_news').insert({title:v('title'),body:v('body'),author_id:uid});if(q.error)throw q.error;await refresh();success('Новость опубликована');break;
 case 'theme':{
- const config={...S.draft.config,intensity:Number(v('intensity')),speed:Number(v('speed')),effects:f.has('effects'),scope:v('scope'),accent:v('accent'),background:v('background'),banner:v('banner'),logo:v('logo'),title:v('title'),tagline:v('tagline'),buttonRadius:Number(v('buttonRadius'))};
+ const updated={...S.draft.config,intensity:Number(v('intensity')),speed:Number(v('speed')),effects:f.has('effects'),scope:v('scope'),accent:v('accent'),background:v('background'),banner:v('banner'),logo:v('logo'),title:v('title'),tagline:v('tagline'),buttonRadius:Number(v('buttonRadius'))};
+ const {seasonStyles,...currentFields}=updated;
+ const config={...updated,seasonStyles:{...(seasonStyles||{}),[S.draft.season]:currentFields}};
  const schedule={};for(const s of ['spring','summer','autumn','winter']){schedule[s]=v('schedule-'+s)}
  for(const x of Object.values(schedule)){if(!/^\d\d-\d\d$/.test(x))throw Error('Неверный формат даты, используйте ММ-ДД')}
  q=await db.from('blezz_forum_themes').update({season:S.draft.season,auto_schedule:f.has('auto_schedule'),config,schedule}).eq('id',1);
@@ -175,6 +178,19 @@ case 'template':{
  q=await db.from('blezz_forum_forms').upsert({key:v('key'),label:v('label'),fields,enabled:true},{onConflict:'key'});if(q.error)throw q.error;await refresh();success('Шаблон формы сохранён');break}
 default:break;
 }}catch(e){fail(e)}}
+function readThemeForm(){const f=document.querySelector('form[data-form="theme"]'); if(!f)return S.draft.config;
+ const data=new FormData(f); const v=(key)=>String(data.get(key)||'').trim();
+ const c={...S.draft.config,title:v('title'),tagline:v('tagline'),effects:data.has('effects'),intensity:Number(v('intensity')),speed:Number(v('speed')),scope:v('scope'),accent:v('accent'),background:v('background'),banner:v('banner'),logo:v('logo'),buttonRadius:Number(v('buttonRadius'))};
+ const schedule={...S.draft.schedule};for(const season of ['spring','summer','autumn','winter'])schedule[season]=v('schedule-'+season);
+ S.draft={...S.draft,config:c,schedule,auto_schedule:data.has('auto_schedule')};return c;
+}
+document.addEventListener('input',e=>{const field=e.target;
+ if(!field.closest?.('form[data-form="theme"]'))return;
+ readThemeForm();const preview=document.querySelector('.preview-static');if(!preview)return;
+ const config=S.draft.config;preview.style.setProperty('--accent',config.accent||seasons[S.draft.season][2]);
+ const heading=preview.querySelector('h2'),sub=preview.querySelector('p');if(heading)heading.textContent=config.title||'BLEZZ RUSSIA';if(sub)sub.textContent=config.tagline||'Игровой форум';
+ if(U(config.background))preview.style.backgroundImage='linear-gradient(#101928a9,#101928b0),url("'+U(config.background)+'")';
+});
 document.addEventListener('submit',e=>{const form=e.target.closest('form[data-form]');if(form){e.preventDefault();void submit(form,e)}});
 document.addEventListener('click',async e=>{
  const btn=e.target.closest('[data-route],[data-action]');if(!btn)return;
@@ -189,7 +205,12 @@ document.addEventListener('click',async e=>{
  else if(a==='react'){if(!needAuth())return;q=await db.from('blezz_forum_reactions').upsert({thread_id:route()[1],user_id:S.user.id,emoji:btn.dataset.kind});if(q.error)throw q.error;success('Реакция сохранена')}
  else if(a==='subscribe'){if(!needAuth())return;q=await db.from('blezz_forum_subscriptions').upsert({thread_id:route()[1],user_id:S.user.id});if(q.error)throw q.error;success('Подписка сохранена')}
  else if(a==='mark-notices'){if(!needAuth())return;q=await db.from('blezz_forum_notifications').update({seen:true}).eq('user_id',S.user.id);if(q.error)throw q.error;await getPrivate();success('Уведомления отмечены прочитанными')}
- else if(a==='theme-season'){S.draft={...S.draft,season:btn.dataset.season,config:{...S.draft.config,accent:seasons[btn.dataset.season][2]}};S.editing='theme';render()}
+ else if(a==='theme-season'){
+ const outgoing=readThemeForm(); const {seasonStyles,...fields}=outgoing;
+ const presets={...(seasonStyles||{}),[S.draft.season]:fields};const next=btn.dataset.season;
+ const incoming=presets[next]||{accent:seasons[next][2],background:'',banner:'',logo:''};
+ S.draft={...S.draft,season:next,config:{...outgoing,...incoming,seasonStyles:presets}};
+ S.editing='theme';render()}
  else if(a==='restore-theme'){const h=S.history.find(x=>String(x.id)===id);if(h){S.draft={...S.draft,season:h.season,config:h.config,schedule:h.schedule,auto_schedule:h.auto_schedule};S.editing='theme';success('Историческая версия выбрана. Нажмите «Опубликовать дизайн» для восстановления.')}}
  else if(a==='rename-server'||a==='rename-category'){
  const server=a==='rename-server',old=(server?S.servers:S.categories).find(x=>x.id===id);if(!old)return;const name=prompt('Новое название',old.name)?.trim();if(!name||name===old.name)return;
