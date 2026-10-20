@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react';
 import type {User} from '@supabase/supabase-js';
 import {browserDb} from '@/lib/supabase/client';
-import {actualSeason,defaultTheme,seasonNames,type ThemeRow,safeMediaUrl} from '@/lib/theme';
+import {actualSeason,defaultTheme,seasonNames,type ThemeRow,safeMediaUrl,configForSeason} from '@/lib/theme';
 import SeasonEffects from '@/components/SeasonEffects';
 import {Gamepad2,Search,Bell,UserRound,MessageSquare,ShieldCheck,LogIn,LogOut,Plus,Pin,Lock,ChevronRight,ArrowLeft,Send,Paperclip,Flame,Heart,ThumbsUp,FileWarning,Settings2,Menu,X,Clock,Users,MessagesSquare,LayoutGrid,CheckCircle2,AlertCircle,BookOpen,Inbox,Upload,Save,Eye,CalendarDays} from 'lucide-react';
 type R=Record<string,any>;
@@ -168,6 +168,7 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
  const names=Object.fromEntries(profiles.map(p=>[p.id,p.username]));
  const myRoles:R[]=user?memberships.filter(r=>r.user_id===user.id).map(m=>roles.find(r=>r.id===m.role_id)).filter((r):r is R=>Boolean(r)):[];
  const selectedSeason=actualSeason(theme);
+ const visibleTheme=configForSeason(theme);
  const unread=notifications.filter(n=>!n.seen).length;
  const threadList=(list:R[])=>list.length?<div className="thread-list">{list.map(t=><button key={t.id} className="thread-row" onClick={()=>go('thread',t.id)}>
   <span className="thread-avatar">{(names[t.author_id]||'B').slice(0,1).toUpperCase()}</span>
@@ -191,10 +192,10 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
  {error&&<div className="alert error"><AlertCircle size={17}/>{error}<button onClick={()=>setError('')}><X size={15}/></button></div>}
  {info&&<div className="alert success"><CheckCircle2 size={17}/>{info}<button onClick={()=>setInfo('')}><X size={15}/></button></div>}
  {view==='home'&&<>
- <section className="hero" style={safeMediaUrl(theme.config.banner||'')?{backgroundImage:'linear-gradient(90deg,rgba(10,16,30,.93),rgba(12,17,28,.68)),url('+safeMediaUrl(theme.config.banner||'')+')'}:{}}>
+ <section className="hero" style={safeMediaUrl(visibleTheme.banner||'')?{backgroundImage:'linear-gradient(90deg,rgba(10,16,30,.93),rgba(12,17,28,.68)),url('+safeMediaUrl(visibleTheme.banner||'')+')'}:{}}>
   <div className="hero-content"><div className="eyebrow"><span className="dot"/> ОФИЦИАЛЬНЫЙ ФОРУМ · {seasonNames[selectedSeason].toUpperCase()} {new Date().getFullYear()}</div>
-  <h1>{theme.config.title||'BLEZZ RUSSIA'}<span className="hero-stroke">.</span></h1>
-  <p>{theme.config.tagline||'Центр игрового сообщества — обсуждай, участвуй, развивай проект.'}</p>
+  <h1>{visibleTheme.title||'BLEZZ RUSSIA'}<span className="hero-stroke">.</span></h1>
+  <p>{visibleTheme.tagline||'Центр игрового сообщества — обсуждай, участвуй, развивай проект.'}</p>
   <div className="hero-buttons"><button className="btn primary" onClick={()=>{if(requireLogin()){setNewThread(true);go('category',categories[0]?.id||'')}}}><Plus size={17}/> Создать тему</button><button className="btn glass" onClick={()=>go('cases')}><ShieldCheck size={18}/> Подать жалобу</button></div>
   </div><div className="hero-graphic"><div className="orbit orbit-a"/><div className="orbit orbit-b"/><Gamepad2 size={104} strokeWidth={1.1}/></div>
  </section>
