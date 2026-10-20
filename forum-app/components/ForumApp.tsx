@@ -70,10 +70,10 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
    db.from('blezz_forum_cases').select('*').order('created_at',{ascending:false}),
    db.from('blezz_forum_notifications').select('*').order('created_at',{ascending:false}).limit(40),
    db.from('blezz_forum_messages').select('*').order('created_at',{ascending:false}).limit(100),
-   db.rpc('blezz_forum_can',{p:'manage_structure'})
+   Promise.all(['moderate','review_cases','manage_roles','manage_structure','manage_news','manage_theme','audit'].map(p=>db.rpc('blezz_forum_can',{p}))).then(all=>all.some(r=>r.data===true))
   ]);
   setCases(c.data||[]);setNotifications(n.data||[]);setMessages(m.data||[]);
-  setCanAdmin(Boolean(admin.data));
+  setCanAdmin(Boolean(admin));
  }
  async function reload(){await loadPublic();const {data:{user:u}}=await db.auth.getUser();await loadUser(u)}
  useEffect(()=>{
