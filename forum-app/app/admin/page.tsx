@@ -6,10 +6,8 @@ export default async function AdminPage(){
  const db=await serverDb();
  const {data:{user}}=await db.auth.getUser();
  if(!user)redirect('/?auth=1');
- const {data:can,error}=await db.rpc('blezz_forum_can',{p:'manage_structure'});
- const {data:theme}=await db.rpc('blezz_forum_can',{p:'manage_theme'});
- const {data:roles}=await db.rpc('blezz_forum_can',{p:'manage_roles'});
- const {data:review}=await db.rpc('blezz_forum_can',{p:'review_cases'});
- if(error||!(can||theme||roles||review))redirect('/');
+ const permissions=['moderate','review_cases','manage_roles','manage_structure','manage_news','manage_theme','audit'];
+ const grants=await Promise.all(permissions.map(p=>db.rpc('blezz_forum_can',{p})));
+ if(!grants.some(r=>!r.error&&r.data===true))redirect('/');
  return <AdminApp/>;
 }
