@@ -166,7 +166,7 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
  const active=threads.find(t=>t.id===activeThread);
  const cat=categories.find(c=>c.id===activeCategory);
  const names=Object.fromEntries(profiles.map(p=>[p.id,p.username]));
- const myRoles=user?memberships.filter(r=>r.user_id===user.id).map(m=>roles.find(r=>r.id===m.role_id)).filter(Boolean):[];
+ const myRoles:R[]=user?memberships.filter(r=>r.user_id===user.id).map(m=>roles.find(r=>r.id===m.role_id)).filter((r):r is R=>Boolean(r)):[];
  const selectedSeason=actualSeason(theme);
  const unread=notifications.filter(n=>!n.seen).length;
  const threadList=(list:R[])=>list.length?<div className="thread-list">{list.map(t=><button key={t.id} className="thread-row" onClick={()=>go('thread',t.id)}>
