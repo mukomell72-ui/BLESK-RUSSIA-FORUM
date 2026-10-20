@@ -101,7 +101,7 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
   const path=v==='thread'?'/thread/'+id:v==='home'?'/':v==='category'?'/':('/'+v);
   window.history.pushState({},'',path);window.scrollTo({top:0,behavior:'smooth'});
  }
- async function authSubmit(e:FormEvent){e.preventDefault();setBusy(true);setError('');
+ async function authSubmit(event:FormEvent){event.preventDefault();setBusy(true);setError('');
   try{
   if(register){
    const {error:e}=await db.auth.signUp({email,password,options:{emailRedirectTo:location.origin+'/auth/callback',data:{username:nickname}}});
@@ -117,19 +117,19 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
   if(e)fail(e);else okay('Ссылка восстановления отправлена на почту, если адрес зарегистрирован.');
  }
  function requireLogin(){if(user)return true;setShowAuth(true);return false}
- async function createThread(e:FormEvent){e.preventDefault();if(!requireLogin())return;
+ async function createThread(event:FormEvent){event.preventDefault();if(!requireLogin())return;
   setBusy(true);const {data,error:e}=await db.from('blezz_forum_threads').insert({category_id:activeCategory,author_id:user!.id,title:threadTitle.trim(),body:threadBody.trim()}).select('id').single();
   setBusy(false);if(e)return fail(e);setNewThread(false);setThreadTitle('');setThreadBody('');await loadPublic();go('thread',data.id);
  }
  async function saveEditedThread(){const {data,error:e}=await db.rpc('blezz_forum_edit_thread',{tid:activeThread,new_title:threadTitle,new_body:threadBody});
   if(e||!data)return fail(e||'Тема не изменена');setEditingThread(false);await loadPublic();okay('Тема обновлена');
  }
- async function createReply(e:FormEvent){e.preventDefault();if(!requireLogin()||!reply.trim())return;setBusy(true);
+ async function createReply(event:FormEvent){event.preventDefault();if(!requireLogin()||!reply.trim())return;setBusy(true);
   const {error:e}=await db.from('blezz_forum_posts').insert({thread_id:activeThread,author_id:user!.id,body:reply.trim()});
   setBusy(false);if(e)return fail(e);setReply('');
   const {data}=await db.from('blezz_forum_posts').select('*').eq('thread_id',activeThread).order('created_at');setPosts(data||[]);okay('Ответ опубликован');
  }
- async function createCase(e:FormEvent){e.preventDefault();if(!requireLogin())return;setBusy(true);
+ async function createCase(event:FormEvent){event.preventDefault();if(!requireLogin())return;setBusy(true);
   const {error:e}=await db.from('blezz_forum_cases').insert({user_id:user!.id,category:caseType,server_id:caseServer||null,applicant_nick:caseNick,subject_nick:caseSubject,description:caseDescription,evidence:caseEvidence,incident_on:caseDate||null});
   setBusy(false);if(e)return fail(e);setShowCaseForm(false);setCaseDescription('');setCaseEvidence('');await loadUser(user);okay('Обращение зарегистрировано. Оно получило уникальный номер.');
  }
@@ -141,11 +141,11 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
   setBusy(false);if(e)return fail(e);
   cb(db.storage.from('blezz-forum-assets').getPublicUrl(path).data.publicUrl);okay('Изображение загружено');
  }
- async function saveProfile(e:FormEvent){e.preventDefault();if(!user||!profile)return;setBusy(true);
+ async function saveProfile(event:FormEvent){event.preventDefault();if(!user||!profile)return;setBusy(true);
   const {error:e}=await db.from('blezz_forum_profiles').update({username:profile.username,game_nick:profile.game_nick,game_server:profile.game_server||null,signature:profile.signature,about:profile.about,avatar_url:profile.avatar_url,cover_url:profile.cover_url}).eq('id',user.id);
   setBusy(false);if(e)return fail(e);await loadPublic();okay('Профиль сохранён');
  }
- async function searchThreads(e:FormEvent){e.preventDefault();const q=search.trim().slice(0,80);if(!q)return;
+ async function searchThreads(event:FormEvent){event.preventDefault();const q=search.trim().slice(0,80);if(!q)return;
   const {data,error:e}=await db.from('blezz_forum_threads').select('*').ilike('title','%'+q+'%').limit(50);
   if(e)return fail(e);setSearchResults(data||[]);go('search');
  }
@@ -153,7 +153,7 @@ export default function ForumApp({initialThread}:{initialThread?:string}){
   const {error:e}=await db.from('blezz_forum_reactions').upsert({thread_id:activeThread,user_id:user!.id,emoji});if(e)fail(e);else okay('Реакция сохранена');
  }
  async function subscribe(){if(!requireLogin())return;const {error:e}=await db.from('blezz_forum_subscriptions').upsert({thread_id:activeThread,user_id:user!.id});if(e)fail(e);else okay('Уведомления для темы включены')}
- async function sendMessage(e:FormEvent){e.preventDefault();if(!requireLogin())return;
+ async function sendMessage(event:FormEvent){event.preventDefault();if(!requireLogin())return;
   const recipient=profiles.find(p=>p.username.toLowerCase()===newMessageTo.trim().toLowerCase());
   if(!recipient)return fail('Пользователь с таким ником не найден');
   const {error:e2}=await db.from('blezz_forum_messages').insert({sender_id:user!.id,recipient_id:recipient.id,body:newMessageBody.trim()});
