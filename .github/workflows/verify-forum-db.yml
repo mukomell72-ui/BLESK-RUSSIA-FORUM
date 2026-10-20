@@ -1,0 +1,37 @@
+name: BLEZZ RUSSIA — Database API smoke test
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-forum-db.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: https://rskgbkgtrigtznnksbyp.supabase.co
+      SUPABASE_KEY: sb_publishable_Nxf788Y3FWMaDNSj0upOMA_aWtmL665
+    steps:
+      - name: Verify publicly readable forum tables
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --header "apikey: $SUPABASE_KEY" --header "Accept: application/json" "$SUPABASE_URL/rest/v1/blezz_forum_categories?select=name&limit=5" > /tmp/categories.json
+          curl --fail --silent --show-error --header "apikey: $SUPABASE_KEY" "$SUPABASE_URL/rest/v1/blezz_forum_servers?select=name&limit=5" > /tmp/servers.json
+          curl --fail --silent --show-error --header "apikey: $SUPABASE_KEY" "$SUPABASE_URL/rest/v1/blezz_forum_themes?select=season,auto_schedule" > /tmp/theme.json
+          python - <<'PY'
+          import json
+          for name in ('categories','servers','theme'):
+              data=json.load(open('/tmp/'+name+'.json'))
+              assert isinstance(data,list) and len(data)>0,(name,data)
+              print(name,len(data))
+          PY
+      - name: Verify anonymous role writes are blocked
+        run: |
+          set -euo pipefail
+          status=$(curl --silent --show-error --output /tmp/deny.json --write-out '%{http_code}' \
+          --request POST --header "apikey: $SUPABASE_KEY" --header "Content-Type: application/json" \
+          --data '{}' "$SUPABASE_URL/rest/v1/blezz_forum_roles")
+          test "$status" = "401" -o "$status" = "403" || { echo "Unexpected anonymous role insert response $status"; cat /tmp/deny.json; exit 1; }
+          echo "Anonymous role insertion correctly rejected: $status"
